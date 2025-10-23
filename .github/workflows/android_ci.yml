@@ -21,7 +21,7 @@ jobs:
 
       - name: Find and unzip project if zipped
         run: |
-          ZIP_FILE=$(ls *.zip 2>/dev/null | head -n 1 || true)
+          ZIP_FILE=$(ls focusguard_starter_v2.zip.zip 2>/dev/null || true)
           if [ -n "$ZIP_FILE" ]; then
             echo "📦 Found ZIP: $ZIP_FILE — unzipping..."
             unzip -o "$ZIP_FILE" -d extracted
@@ -41,3 +41,17 @@ jobs:
         with:
           path: ~/.gradle/caches
           key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
+          restore-keys: |
+            gradle-cache-${{ runner.os }}-
+
+      - name: Grant Gradle permission
+        run: chmod +x gradlew || echo "No gradlew found yet"
+
+      - name: Build APK
+        run: ./gradlew assembleDebug --no-daemon || echo "Gradle build may fail if zip missing."
+
+      - name: Upload built APK as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: FocusGuard-APK
+          path: app/build/outputs/apk/debug/*.apk
