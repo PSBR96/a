@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - "*.zip"    # Only runs when a ZIP file is pushed
+      - "focusguard_starter_v2.zip.zip"  # updated for new ZIP name
 
 permissions:
   contents: write  # Needed to create releases
@@ -19,7 +19,7 @@ jobs:
       - name: Unzip uploaded project
         run: |
           echo "🧩 Searching for ZIP file..."
-          ZIP_FILE=$(ls *.zip | head -n 1)
+          ZIP_FILE=$(ls focusguard_starter_v2.zip.zip 2>/dev/null || true)
           echo "Found ZIP: $ZIP_FILE"
           unzip -o "$ZIP_FILE" -d extracted
           echo "✅ Project unzipped to ./extracted"
@@ -40,7 +40,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
-          key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          key: gradle-cache-${{ runner.os }}-${{ hashFiles('**/*.gradle*') }}
           restore-keys: |
             gradle-cache-${{ runner.os }}-
 
