@@ -7,7 +7,7 @@ on:
       - "*.zip"
 
 permissions:
-  contents: write
+  contents: write  # Needed to create releases
 
 jobs:
   auto-build:
@@ -49,13 +49,25 @@ jobs:
           restore-keys: |
             gradle-cache-${{ runner.os }}-
 
+      - name: Ensure Gradle Wrapper exists
+        run: |
+          # Find gradlew in the project
+          GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1 || true)
+          if [ -z "$GRADLEW_PATH" ]; then
+            echo "⚡ gradlew not found — generating Gradle wrapper..."
+            # Generate wrapper (Ubuntu runner has Gradle installed)
+            gradle wrapper --gradle-version 8.3
+            chmod +x gradlew
+          else
+            echo "✅ Found gradlew at $GRADLEW_PATH"
+          fi
+
       - name: Build APK
         run: |
           echo "🚀 Searching for gradlew recursively..."
           GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "❌ gradlew not found! Listing all files:"
-            find .
+            echo "❌ gradlew still not found!"
             exit 1
           fi
           GRADLE_DIR=$(dirname "$GRADLEW_PATH")
@@ -89,3 +101,4 @@ jobs:
             🔹 Branch: ${{ github.ref_name }}
             🔹 Built on: ${{ github.event.head_commit.timestamp }}
           files: ${{ steps.locate.outputs.apk_path }}
+
