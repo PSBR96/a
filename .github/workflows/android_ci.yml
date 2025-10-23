@@ -17,9 +17,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Find and unzip project if zipped
+      - name: Unzip project if ZIP exists
         run: |
-          ZIP_FILE=$(ls focusguard_starter_v2.zip.zip 2>/dev/null || true)
+          ZIP_FILE=$(ls *.zip 2>/dev/null | head -n 1 || true)
           if [ -n "$ZIP_FILE" ]; then
             echo "📦 Found ZIP: $ZIP_FILE — unzipping..."
             unzip -o "$ZIP_FILE" -d extracted
@@ -54,16 +54,15 @@ jobs:
           echo "🚀 Searching for gradlew recursively..."
           GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "❌ gradlew not found! Listing all files for debugging:"
+            echo "❌ gradlew not found! Listing all files:"
             find .
             exit 1
           fi
-
           GRADLE_DIR=$(dirname "$GRADLEW_PATH")
-          echo "Found gradlew in $GRADLE_DIR, building APK..."
+          echo "Found gradlew in $GRADLE_DIR"
           cd "$GRADLE_DIR"
-
           chmod +x gradlew
+          dos2unix gradlew || true
           ./gradlew assembleDebug --no-daemon
 
       - name: Locate APK file
@@ -72,6 +71,7 @@ jobs:
           APK_PATH=$(find . -type f -name "app-debug.apk" | head -n 1)
           if [ -z "$APK_PATH" ]; then
             echo "❌ APK not found!"
+            find .
             exit 1
           fi
           echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
