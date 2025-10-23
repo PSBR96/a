@@ -12,8 +12,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    env:
-      JAVA_OPTS: -Xmx2g
 
     steps:
       - name: Checkout repository
@@ -29,6 +27,13 @@ jobs:
           else
             echo "ℹ️ No ZIP file found — continuing..."
           fi
+
+      - name: Debug: list files
+        run: |
+          echo "📂 Listing root folder:"
+          ls -al
+          echo "📂 Listing extracted folder:"
+          ls -al extracted
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -46,10 +51,11 @@ jobs:
 
       - name: Build APK
         run: |
-          echo "🚀 Searching for gradlew..."
-          GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
+          echo "🚀 Searching for gradlew recursively..."
+          GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "❌ gradlew not found!"
+            echo "❌ gradlew not found! Listing all files for debugging:"
+            find .
             exit 1
           fi
 
@@ -60,8 +66,19 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon
 
-      - name: Upload built APK as artifact
+      - name: Locate APK file
+        id: locate
+        run: |
+          APK_PATH=$(find . -type f -name "app-debug.apk" | head -n 1)
+          if [ -z "$APK_PATH" ]; then
+            echo "❌ APK not found!"
+            exit 1
+          fi
+          echo "apk_path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "✅ Found APK at $APK_PATH"
+
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: FocusGuard-APK
-          path: app/build/outputs/apk/debug/*.apk
+          path: ${{ steps.locate.outputs.apk_path }}
