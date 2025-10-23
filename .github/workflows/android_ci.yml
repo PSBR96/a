@@ -44,11 +44,21 @@ jobs:
           restore-keys: |
             gradle-cache-${{ runner.os }}-
 
-      - name: Grant Gradle permission
-        run: chmod +x gradlew || echo "No gradlew found yet"
-
       - name: Build APK
-        run: ./gradlew assembleDebug --no-daemon || echo "Gradle build may fail if zip missing."
+        run: |
+          echo "🚀 Searching for gradlew..."
+          GRADLEW_PATH=$(find . -name "gradlew" | head -n 1)
+          if [ -z "$GRADLEW_PATH" ]; then
+            echo "❌ gradlew not found!"
+            exit 1
+          fi
+
+          GRADLE_DIR=$(dirname "$GRADLEW_PATH")
+          echo "Found gradlew in $GRADLE_DIR, building APK..."
+          cd "$GRADLE_DIR"
+
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
 
       - name: Upload built APK as artifact
         uses: actions/upload-artifact@v4
