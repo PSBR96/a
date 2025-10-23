@@ -54,8 +54,10 @@ jobs:
           # Find gradlew in the project
           GRADLEW_PATH=$(find . -type f -name "gradlew" | head -n 1 || true)
           if [ -z "$GRADLEW_PATH" ]; then
-            echo "⚡ gradlew not found — generating Gradle wrapper..."
-            # Generate wrapper (Ubuntu runner has Gradle installed)
+            echo "⚡ gradlew not found — installing Gradle and generating wrapper..."
+            # Install Gradle temporarily
+            sudo apt-get update
+            sudo apt-get install -y gradle
             gradle wrapper --gradle-version 8.3
             chmod +x gradlew
           else
@@ -101,4 +103,3 @@ jobs:
             🔹 Branch: ${{ github.ref_name }}
             🔹 Built on: ${{ github.event.head_commit.timestamp }}
           files: ${{ steps.locate.outputs.apk_path }}
-
